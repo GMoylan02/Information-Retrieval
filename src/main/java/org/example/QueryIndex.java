@@ -28,10 +28,9 @@ public class QueryIndex
 {
     // Directory where the search index will be saved
     private static String INDEX_DIRECTORY = "index";
-    private static String OUTPUT_FILENAME = "resultqrel";
     private Analyzer analyzer;
     private Directory directory;
-    private static int MAX_RESULTS = 10;
+    private static int MAX_RESULTS = 50;
     private static final int VSM_MODE = 1;
     private static final int BM25_MODE = 2;
 
@@ -72,15 +71,10 @@ public class QueryIndex
                 }
                 String text = docSplit[1];
                 Document doc = new Document();
-                // First used string field
+
                 doc.add(new StringField("id", String.valueOf(i), Field.Store.YES));
-                //doc.add(new StringField("title", title, Field.Store.YES));
-                //doc.add(new StringField("author", author, Field.Store.YES));
-                //doc.add(new Field("content", text, ft));
-                // then tried text field
                 doc.add(new TextField("title", title, Field.Store.YES));
                 doc.add(new TextField("author", author, Field.Store.YES));
-                //doc.add(new Field("content", text, ft));
                 String fullText = title + " " + author + " " + text;
                 doc.add(new TextField("content", fullText, Field.Store.YES));
                 iwriter.addDocument(doc);
@@ -104,14 +98,10 @@ public class QueryIndex
             isearcher.setSimilarity(new BM25Similarity()); // BM25
         }
         QueryParser parser = new QueryParser("content", analyzer);
-        // Analyzer doesn't remove question marks since they act as wildcards, remove manually instead
-        queryString = queryString.replaceAll("\\?", "");
-        // Given collection doesn't contain it, but remove asterisk as well for completeness
-        queryString = queryString.replaceAll("\\*", "");
         // Change everything to lowercase and remove special characters
         queryString = queryString.toLowerCase().replaceAll("[^a-z0-9\\s]", " ");
         Query queryTerm = parser.parse(queryString);
-        ScoreDoc[] hits = isearcher.search(queryTerm, 50).scoreDocs;
+        ScoreDoc[] hits = isearcher.search(queryTerm, MAX_RESULTS).scoreDocs;
 
         // Make sure we actually found something
         if (hits.length == 0)
