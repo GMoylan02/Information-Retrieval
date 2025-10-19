@@ -90,7 +90,6 @@ public class QueryIndex
         DirectoryReader ireader = DirectoryReader.open(directory);
 
         IndexSearcher isearcher = new IndexSearcher(ireader);
-        // TODO fix this
         if (mode == VSM_MODE) {
             isearcher.setSimilarity(new ClassicSimilarity());   // VSM
         }
