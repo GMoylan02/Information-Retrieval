@@ -72,10 +72,17 @@ public class QueryIndex
                 }
                 String text = docSplit[1];
                 Document doc = new Document();
+                // First used string field
                 doc.add(new StringField("id", String.valueOf(i), Field.Store.YES));
-                doc.add(new StringField("title", title, Field.Store.YES));
-                doc.add(new StringField("author", author, Field.Store.YES));
-                doc.add(new Field("content", text, ft));
+                //doc.add(new StringField("title", title, Field.Store.YES));
+                //doc.add(new StringField("author", author, Field.Store.YES));
+                //doc.add(new Field("content", text, ft));
+                // then tried text field
+                doc.add(new TextField("title", title, Field.Store.YES));
+                doc.add(new TextField("author", author, Field.Store.YES));
+                //doc.add(new Field("content", text, ft));
+                String fullText = title + " " + author + " " + text;
+                doc.add(new TextField("content", fullText, Field.Store.YES));
                 iwriter.addDocument(doc);
             }
         }
