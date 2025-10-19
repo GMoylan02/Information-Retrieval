@@ -108,6 +108,8 @@ public class QueryIndex
         queryString = queryString.replaceAll("\\?", "");
         // Given collection doesn't contain it, but remove asterisk as well for completeness
         queryString = queryString.replaceAll("\\*", "");
+        // Change everything to lowercase and remove special characters
+        queryString = queryString.toLowerCase().replaceAll("[^a-z0-9\\s]", " ");
         Query queryTerm = parser.parse(queryString);
         ScoreDoc[] hits = isearcher.search(queryTerm, 50).scoreDocs;
 
