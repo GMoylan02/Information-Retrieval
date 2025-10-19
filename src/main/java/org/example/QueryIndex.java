@@ -72,7 +72,7 @@ public class QueryIndex
                 }
                 String text = docSplit[1];
                 Document doc = new Document();
-                doc.add(new StringField("id", String.valueOf(i+1), Field.Store.YES));
+                doc.add(new StringField("id", String.valueOf(i), Field.Store.YES));
                 doc.add(new StringField("title", title, Field.Store.YES));
                 doc.add(new StringField("author", author, Field.Store.YES));
                 doc.add(new Field("content", text, ft));
