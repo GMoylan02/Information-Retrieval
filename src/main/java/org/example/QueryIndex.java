@@ -16,6 +16,7 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -31,6 +32,8 @@ public class QueryIndex
     private Analyzer analyzer;
     private Directory directory;
     private static int MAX_RESULTS = 10;
+    private static final int VSM_MODE = 1;
+    private static final int BM25_MODE = 2;
 
     public QueryIndex() throws IOException {
         // Incorporates porter stemming plus stop words plus a few others
@@ -80,20 +83,26 @@ public class QueryIndex
         iwriter.close();
     }
 
-    public String queryVSM(int queryId, String queryString) throws IOException, ParseException {
+    public String query(int queryId, String queryString, int mode) throws IOException, ParseException {
         if (queryString.equals("")) return "";
         // Ranks documents in order of similarity to queryString using TF-IDF (VSM)
         DirectoryReader ireader = DirectoryReader.open(directory);
 
         IndexSearcher isearcher = new IndexSearcher(ireader);
-        isearcher.setSimilarity(new ClassicSimilarity());   // VSM
+        // TODO fix this
+        if (mode == VSM_MODE) {
+            isearcher.setSimilarity(new ClassicSimilarity());   // VSM
+        }
+        else {
+            isearcher.setSimilarity(new BM25Similarity()); // BM25
+        }
         QueryParser parser = new QueryParser("content", analyzer);
         // Analyzer doesn't remove question marks since they act as wildcards, remove manually instead
         queryString = queryString.replaceAll("\\?", "");
         // Given collection doesn't contain it, but remove asterisk as well for completeness
         queryString = queryString.replaceAll("\\*", "");
         Query queryTerm = parser.parse(queryString);
-        ScoreDoc[] hits = isearcher.search(queryTerm, 20).scoreDocs;
+        ScoreDoc[] hits = isearcher.search(queryTerm, 50).scoreDocs;
 
         // Make sure we actually found something
         if (hits.length == 0)
@@ -102,21 +111,17 @@ public class QueryIndex
             ireader.close();
             return "";
         }
-        //for (ScoreDoc sd : hits) {
-        //    Document doc = isearcher.doc(sd.doc);
-        //    System.out.printf("DocID=%d Score=%.4f Title=%s\n",
-        //            sd.doc, sd.score, doc.get("title"));
-        //}
+        String modeString = mode == VSM_MODE ? "VSM" : "BM25";
         int rank = 1;
         StringBuilder result = new StringBuilder();
         for (ScoreDoc sd: hits) {
             Document doc = isearcher.doc(sd.doc);
             int id = Integer.parseInt(doc.get("id"));
-            result.append(String.format("%s Q0 %s %d %.4f lucene_runVSM\n",
-                    queryId, id, rank, sd.score));
+            result.append(String.format("%s Q0 %s %d %.4f lucene_run%s\n",
+                    queryId, id, rank, sd.score, modeString));
             rank++;
         }
-        // close everything when we're done
+
         ireader.close();
         return result.toString();
     }

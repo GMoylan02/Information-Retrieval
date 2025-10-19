@@ -28,13 +28,25 @@ public class Main {
     public static void testQueries(QueryIndex qi) throws IOException, ParseException {
         String content = new String(Files.readAllBytes(Paths.get(QUERY_FILE)));
         String[] queries = content.split("\\.I \\d{0,4}\r\n\\.W\r\n");
-        StringBuilder fileContents = new StringBuilder();
+
+        // VSM
+        StringBuilder VSMfileContents = new StringBuilder();
         for (int i = 0; i < queries.length; i++) {
-            fileContents.append(qi.queryVSM(i, queries[i]));
+            VSMfileContents.append(qi.query(i, queries[i], 1));
         }
         try (FileWriter fw = new FileWriter("VSMqrel", false);
              PrintWriter writer = new PrintWriter(fw)) {
-            writer.write(fileContents.toString());
+            writer.write(VSMfileContents.toString());
+        }
+
+        // BM25
+        StringBuilder BM25fileContents = new StringBuilder();
+        for (int i = 0; i < queries.length; i++) {
+            BM25fileContents.append(qi.query(i, queries[i], 2));
+        }
+        try (FileWriter fw = new FileWriter("BM25qrel", false);
+             PrintWriter writer = new PrintWriter(fw)) {
+            writer.write(BM25fileContents.toString());
         }
     }
 }
